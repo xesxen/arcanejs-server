@@ -55,7 +55,7 @@ irc.connect = function(server, websocket, nick, user, version, channels, callbac
         data = data.split('\n');
         for (var i = 0; i < data.length; i++) {
             if (data !== '') {
-                console.log('RECV - ' + data[i]);
+                //console.log('RECV - ' + data[i]);
                 irc.handle(data[i].slice(0, -1));
             }
         }

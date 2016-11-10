@@ -21,7 +21,8 @@ manifest = [
     "lib/arcanejs-ui/js/bootstrap/modal.js",
     "lib/arcanejs-ui/js/bootstrap/dropdown.js",
     "lib/arcanejs-ui/js/bootstrap/dropdownitem.js",
-    "lib/arcanejs-ui/js/bootstrap/glyphicon.js",    
+    "lib/arcanejs-ui/js/bootstrap/glyphicon.js",
+  	"lib/arcanejs-ui/js/ui/baseapp.js",
     "lib/arcanejs-ui/js/ui/panel.js",
     "lib/arcanejs-ui/js/ui/frame.js",
     "lib/arcanejs-ui/js/ui/frameset.js",
@@ -125,8 +126,8 @@ class Includer{
             el.setAttribute("type", "text/css");
             el.onload = () => {
                 this.done();
-            };          
-          	el.src = src;
+            }; 
+          	el.setAttribute("href", src);
           	document.head.appendChild( el );
         } else {
         	console.log("Unknown filetype: " + src);

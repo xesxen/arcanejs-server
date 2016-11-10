@@ -54,8 +54,18 @@ if(sessions == undefined){
 loadPlugins();
 
 function firstRun(){
-	console.log("FlunkED is run for the first time. Some variables need to be set before FlunkED can start.");
-  	var user = readlineSync.question('Username : ');
+	console.log("ArcaneJS-Server is run for the first time. Some variables need to be set before ArcaneJS can start.");
+	addUserDialog();
+  	
+   	port = readlineSync.question('HTTP Port to use : ');
+    storage.setItem('port',port);
+	rootDir = readlineSync.question('Root directory : ');
+    storage.setItem('rootDir',rootDir);
+}
+
+function addUserDialog(){
+  	console.log("Addding a new user.");
+	var user = readlineSync.question('Username : ');
   	var pass1 = "a";
   	var pass2 = "b";
   	var i = 0;
@@ -76,12 +86,7 @@ function firstRun(){
   	var secret = speakeasy.generateSecret();
   	console.log("2FA QR :");
   	qrcode.generate(secret.otpauth_url);
-  	addUser( user, pass1, secret.base32 );
-      
-   	port = readlineSync.question('HTTP Port to use : ');
-    storage.setItem('port',port);
-	rootDir = readlineSync.question('Root directory : ');
-    storage.setItem('rootDir',rootDir);
+  	addUser( user, pass1, secret.base32 );  
 }
 
 function addUser(name, pass, secret){
@@ -128,7 +133,7 @@ function newSession(user){
   	session.username = user.name;
   	session.loggedIn = true;
   	sessions[session.uuid] = session;
-  
+  	console.log(session);
   	storage.setItem('sessions',sessions);
   	return session;
 }
@@ -280,13 +285,13 @@ app.post('/api/login', function(req, res){
   	
  	if(user != null){
         if(checkPass(user, password)){
-          	var session = newSession(user.name);
+          	var session = newSession(user);
           	res.cookie("sessionId", session.uuid, { httpOnly: true });
-          	//if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
-              	console.log("Login " + username + " OK");
+          	if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
+              	console.log("Login " + user.name + " OK");
             	res.send({csrfToken:session.csrfToken});
               	loginOK = true;
-          	//}
+          	}
         }
     }
   	
