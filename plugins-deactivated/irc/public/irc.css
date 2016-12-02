@@ -1,0 +1,29 @@
+.ircwindow{
+	background: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    border: 0;
+    color: inherit;
+    word-wrap: normal;
+    white-space: pre-wrap;
+    font-size: 11px;
+  	width:100%;
+    flex:1;
+  	overflow-y: scroll;
+}
+
+.ircinput{
+    width: 100%;
+    height: 18px;
+    background: rgba(0,0,0,0.1);
+    color: inherit;
+    border: 0;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+
+.ircinput:focus {
+    outline-width: 0;
+}

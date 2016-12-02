@@ -5,14 +5,18 @@
 }
 
 .land {
-  fill: rgba(0,0,0,0.5);
+  fill: rgba(255,255,255,0.1);
+  stroke: #fff;
+  stroke-opacity: .2;
+  stroke-width: 1px;  
 }
 
 .boundary {
   fill: none;
   stroke: #fff;
-  stroke-opacity: .3;
-  stroke-width: 0.5px;
+  stroke-opacity: .2;
+  stroke-width: 1px;
+
 }
 
 .threatOverlay {
@@ -22,4 +26,11 @@
     padding-left: 40px;
     width: 100%;
     height: 100%;
+}
+
+.threatMap{
+	width:100%;
+    height:100%;
+    background-color:rgba(0,0,0,0.7);
+
 }

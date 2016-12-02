@@ -13,6 +13,8 @@ class ThreatMap extends BaseApp{
             });
         });
       	
+      	this.map = new Div("threatMap");
+      	this.view.addChild(this.map);
 		this.overlay = new Div("threatOverlay").addChild(new H3("CYBER Attack map *pew* *pew* *pew*"));
       
     }
@@ -32,7 +34,7 @@ class ThreatMap extends BaseApp{
 
         var graticule = d3.geo.graticule();
 
-        var svg = d3.select(this.view.element).append("svg")
+        var svg = d3.select(this.map.element).append("svg")
             .attr("width", this.view.width)
             .attr("height", this.view.height);
 
@@ -56,7 +58,7 @@ class ThreatMap extends BaseApp{
         });
 
         d3.select(self.frameElement).style("height", this.view.height + "px");
-
+		
       	this.view.addChild(this.overlay);
     }
 }
