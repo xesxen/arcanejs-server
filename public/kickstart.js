@@ -1,4 +1,6 @@
 manifest = [
+    "lib/arcanejs-ui/css/bootstrap.min.js",
+    "lib/ace/ace.js",
     "/socket.io/socket.io.js",
   	"lib/morrisjs/morris.css",
   	"lib/morrisjs/raphael-min.js",  
