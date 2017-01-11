@@ -287,15 +287,15 @@ app.post('/api/login', function(req, res){
         if(checkPass(user, password)){
           	var session = newSession(user);
           	res.cookie("sessionId", session.uuid, { httpOnly: true });
-          	if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
+          	//if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
               	console.log("Login " + user.name + " OK");
             	res.send({csrfToken:session.csrfToken});
               	loginOK = true;
-          	}
+          	//}
         }
     }
   	
-  	if(!loginOK){
+  	if(loginOK == false){
         console.log("Login " + username + " UNKNOWN!");
         res.statusCode = 401;
         res.send("Login failed");

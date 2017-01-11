@@ -1,5 +1,8 @@
 manifest = [
     "/socket.io/socket.io.js",
+  	"lib/morrisjs/morris.css",
+  	"lib/morrisjs/raphael-min.js",  
+    "lib/morrisjs/morris.min.js",
     "lib/arcanejs-ui/js/element.js",
     "lib/arcanejs-ui/js/dom/div.js",
     "lib/arcanejs-ui/js/dom/button.js",
@@ -48,6 +51,7 @@ String.prototype.endsWith = function (s) {
 class LoadingBar{
   	constructor(){
     	let bar = document.createElement("div");
+      	console.log("kutke");
         bar.style.position = 'absolute';
         bar.style.left = '0px';
         bar.style.top = '0px';
@@ -99,12 +103,19 @@ class LoadingBar{
 }
 
 class Includer{
-	constructor(manifest, callback){
+	constructor(manifest, callback, hideLoadingBar){
+      	console.log(manifest);
       	this.manifest = manifest;
       	this.total = manifest.length;
       	this.loaded = 0;
       	this.callback = callback;
-      	this.loadingBar = new LoadingBar();
+      	console.log(hideLoadingBar);
+       	if(hideLoadingBar != true){
+          	console.log("wat");
+        	this.loadingBar = new LoadingBar();
+          	
+        }
+      	
       	this.load();
     	return this;
     }
@@ -131,27 +142,39 @@ class Includer{
           	document.head.appendChild( el );
         } else {
         	console.log("Unknown filetype: " + src);
-          	callback(false);
+          	if(this.callback){
+            	this.callback(false); 
+            }
         }
 
-      	if(this.manifest.length > 0){
-        	this.load();
-        }
+      	//if(this.manifest.length > 0){
+        	//this.load();
+        //}
     }
 
   	done(){
-      	this.loadingBar.done();
+      	
     	this.loaded++;
       	if(this.loaded == this.total){
-        	this.callback(true); 
+          	if(this.loadingBar){
+            	this.loadingBar.done();
+            }
+          	
+          	if(this.callback){
+            	this.callback(true); 
+            }
+        } else {
+        	this.load(); 
         }
     }
 }
 
-include = function(manifest, callback){
-	new Includer(manifest, callback);
+include = function(manifest, callback, hideLoadingBar){
+	new Includer(manifest, callback, hideLoadingBar);
 }
 
-include(manifest, () => {
-  	app = new App();
-});
+document.body.onload = function(){
+    include(manifest, () => {
+        app = new App();
+    }, true);
+}

@@ -39,18 +39,13 @@ class Settings extends BaseApp{
             element: chart.element,
             data: [
               {value: 70, label: 'foo'},
-              {value: 15, label: 'bar'},
-              {value: 10, label: 'baz'},
-              {value: 5, label: 'A really really long label'}
+              {value: 15, label: 'bar'}
             ],
             backgroundColor: 'rgba(0,0,0,0)',
             labelColor: 'rgba(255,255,255,0.4)',
             colors: [
-              '#fff',
-              '#bbb',
-              '#999',
-              '#777',
-              '#555'
+              'rgba(255,255,255,0.4)',
+              'rgba(255,255,255,0.2)'
             ],
             formatter: function (x) { return x + "%"}
           });

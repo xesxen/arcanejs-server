@@ -1,22 +1,19 @@
 class Alarms extends BaseApp{
   	constructor(){
 		super("bell");
-      
-      
 		include([
           	"/apps/alarms/alarms.css",
           	"/apps/alarms/window.js",
             "/apps/alarms/alarmitem.js",
           	"/apps/alarms/alarmwindow.js",
           	"/apps/alarms/detailwindow.js"
-        ], () =>{
-        	this.init();
-        });
+        ], null, true);
     }
   
   	init(){
+      	super.init();
       	this.activeItem = null;
-		this.item.handleClick();
+
 		this.alarmWindow = new AlarmWindow(this);
       	this.inspector = new InspectorWindow(this);
 
@@ -27,7 +24,7 @@ class Alarms extends BaseApp{
       
       	let bottomFrame = new Frame( frameSet, 0.1 );
       	bottomFrame.setContent ( new TabGroup( this.view, this.inspector.tab ) );
-      	frameSet.addFrame( bottomFrame, 0.3 );        
+      	frameSet.addFrame( bottomFrame, 0.3 );
     }
   
   	setActiveItem(item){
