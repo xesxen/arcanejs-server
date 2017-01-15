@@ -1,12 +1,13 @@
 class Alarms extends BaseApp{
   	constructor(){
-		super("bell");
+		super("edit");
 		include([
-          	"/apps/alarms/alarms.css",
-          	"/apps/alarms/window.js",
-            "/apps/alarms/alarmitem.js",
-          	"/apps/alarms/alarmwindow.js",
-          	"/apps/alarms/detailwindow.js"
+          	"/apps/edit/alarms.css",
+          	"/apps/edit/window.js",
+            "/apps/edit/alarmitem.js",
+          	"/apps/edit/editorwindow.js",
+          	"/apps/edit/filebrowser.js",
+          	"/apps/edit/fileitem.js"
         ], null, true);
     }
   
@@ -16,24 +17,23 @@ class Alarms extends BaseApp{
 
 		this.alarmWindow = new EditorWindow("editor");
       
-      	this.inspector = new InspectorWindow(this);
+      	this.inspector = new FileBrowser(this);
 
       	let frameSet = new FrameSet( false, this.view,  this.view);	
-        let mainFrame = new Frame( frameSet );
-      	mainFrame.setContent ( new TabGroup( this.view, this.alarmWindow.tab ) );
-      	frameSet.addFrame( mainFrame, 0.5 );
       
-      	let bottomFrame = new Frame( frameSet, 0.1 );
+        let bottomFrame = new Frame( frameSet, 0.1 );
       	bottomFrame.setContent ( new TabGroup( this.view, this.inspector.tab ) );
       	frameSet.addFrame( bottomFrame, 0.3 );
+      
+        let mainFrame = new Frame( frameSet );
+      	this.mainFrame = mainFrame;
+      	mainFrame.setContent ( new TabGroup( this.view, this.alarmWindow.tab ) );
+      	frameSet.addFrame( mainFrame, 0.8 );
     }
-  
-  	setActiveItem(item){
-    	if(this.activeItem != null){
-        	this.activeItem.deactivate(); 
-        }
-     	this.activeItem = item;
-      	this.inspector.setItem(item);
+	
+  	open(file){
+    	let editWindow = new EditorWindow("blaat", file);
+      	this.mainFrame.content.addTab(editWindow.tab);
     }
 }
 

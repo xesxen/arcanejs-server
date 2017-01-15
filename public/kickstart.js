@@ -178,5 +178,5 @@ include = function(manifest, callback, hideLoadingBar){
 document.body.onload = function(){
     include(manifest, () => {
         app = new App();
-    }, true);
+    }, false);
 }
