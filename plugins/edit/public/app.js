@@ -1,13 +1,18 @@
 class Alarms extends BaseApp{
   	constructor(){
 		super("edit");
+      
+      	this.openFiles = [];
+      	this.focussedEditor = null;
+      	
 		include([
           	"/apps/edit/alarms.css",
           	"/apps/edit/window.js",
             "/apps/edit/alarmitem.js",
           	"/apps/edit/editorwindow.js",
           	"/apps/edit/filebrowser.js",
-          	"/apps/edit/fileitem.js"
+          	"/apps/edit/fileitem.js",
+          	"/apps/edit/filedropdown.js"
         ], null, true);
     }
   
@@ -15,7 +20,7 @@ class Alarms extends BaseApp{
       	super.init();
       	this.activeItem = null;
 
-		this.alarmWindow = new EditorWindow("editor");
+		//this.alarmWindow = new EditorWindow("editor");
       
       	this.inspector = new FileBrowser(this);
 
@@ -27,13 +32,74 @@ class Alarms extends BaseApp{
       
         let mainFrame = new Frame( frameSet );
       	this.mainFrame = mainFrame;
-      	mainFrame.setContent ( new TabGroup( this.view, this.alarmWindow.tab ) );
+      	mainFrame.setContent ( new TabGroup( this.view, null ) );
       	frameSet.addFrame( mainFrame, 0.8 );
+      
+      
+      	document.addEventListener("keydown", (e) => {
+      		if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                e.preventDefault();
+                this.save();
+            }
+          	return false;
+      	});
+      
+    }
+    
+    close(editor){
+        let i = 0;
+        while (i < this.openFiles.length){
+            if(editor == this.openFiles[i]){
+                this.openFiles.splice(i,1);
+                this.focussedEditor = null;
+                i = this.openFiles.length;
+                
+            }
+            i++;
+        }
     }
 	
   	open(file){
-    	let editWindow = new EditorWindow("blaat", file);
-      	this.mainFrame.content.addTab(editWindow.tab);
+        let editorWindow = new EditorWindow(file, this);
+        this.openFiles.push(editorWindow);
+        this.mainFrame.content.addTab(editorWindow.tab);//TODO: Check if main frame exists...
+        this.setFocus(editorWindow);
+    }
+    
+    getOpen(file){
+   	    let editorWindow = null;
+  	    let i = 0;
+  	    while (i < this.openFiles.length ){
+  	        if(this.openFiles[i].file.name == file.name && this.openFiles[i].file.dir == file.dir){
+  	            editorWindow = this.openFiles[i];
+  	            i = this.openFiles.length;
+  	        }
+  	        i++;
+  	    }
+  	    return editorWindow;
+    }
+  
+  	save(){
+        if(this.focussedEditor !== null && this.isActive){
+          	let data = this.focussedEditor.getValue();
+          	let file = this.focussedEditor.file;
+          	let saving = this.focussedEditor;
+          	app.reqManager.post("api/save/"+file.name+"?cd="+file.dir, data, (res) => {
+            	if(res.status === 200){
+            	    saving.markClean();
+            	}
+            });
+        }
+    }
+  
+  	setFocus(editor){
+    	if(editor != this.focussedEditor){
+          	if(this.focussedEditor !== null){
+            	this.focussedEditor.unFocus();
+            }
+          	
+        	this.focussedEditor = editor;
+        }
     }
 }
 

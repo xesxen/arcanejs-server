@@ -20,13 +20,13 @@ class IrcWindow extends Div{
     }
   
   	addText(text){
-    	this.pre.setText(this.pre.getText() + text);
+        this.pre.setText(this.pre.getText() + text);
 		this.pre.element.scrollTop = this.pre.element.scrollHeight;
     }
   
   	handleKeyDown(e){
      	if (e.keyCode == 13) {
-        	console.log(this.input.value);
+            console.log(this.input.value);
           	app.socketManager.emit("irc raw",this.input.value);
         }
     }
@@ -48,7 +48,7 @@ class IrcWindow extends Div{
   
   	handleActivate(e){
       	if(this.input != null){
-    		this.input.element.focus();
+        this.input.element.focus();
           	this.pre.element.scrollTop = this.pre.element.scrollHeight;
         }
     }

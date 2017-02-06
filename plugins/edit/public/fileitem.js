@@ -3,8 +3,7 @@ class FileItem extends Div{
       	super("fileItem unselectable");
       	this.fileBrowser = fileBrowser;	
       
-      
-      	if(file != null){
+      	if(file !== null){
          	this.file = file;
             if(file.isDir){
                 this.setText("/" + file.name);
@@ -21,6 +20,14 @@ class FileItem extends Div{
           	this.setText("/..");
           	this.onClick= () => {
             	this.fileBrowser.cd("..");
+            }
+        }
+        
+        this.element.oncontextmenu = (event) => {
+            if (event.which == 3) {
+                event.stopPropagation();
+                const fileDropdown = new FileDropdown(event, this.file, this);
+                return false;
             }
         }
     }

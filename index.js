@@ -21,7 +21,6 @@ app.use(cookieParser());
 
 storage.initSync();
 
-
 //User stuff
 var users = storage.getItem('users');
 var sessions = storage.getItem('sessions');

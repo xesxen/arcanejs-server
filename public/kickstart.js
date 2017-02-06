@@ -53,7 +53,6 @@ String.prototype.endsWith = function (s) {
 class LoadingBar{
   	constructor(){
     	let bar = document.createElement("div");
-      	console.log("kutke");
         bar.style.position = 'absolute';
         bar.style.left = '0px';
         bar.style.top = '0px';
@@ -106,16 +105,14 @@ class LoadingBar{
 
 class Includer{
 	constructor(manifest, callback, hideLoadingBar){
-      	console.log(manifest);
+      	//console.log(manifest);
       	this.manifest = manifest;
       	this.total = manifest.length;
       	this.loaded = 0;
       	this.callback = callback;
-      	console.log(hideLoadingBar);
+
        	if(hideLoadingBar != true){
-          	console.log("wat");
-        	this.loadingBar = new LoadingBar();
-          	
+        	this.loadingBar = new LoadingBar(); 	
         }
       	
       	this.load();

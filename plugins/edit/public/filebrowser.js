@@ -4,8 +4,16 @@ class FileBrowser extends Window{
       
       	this.editApp = editApp;
       	this.currentDir = [];
-      
- 		this.updateFiles();
+      	this.updateFiles();
+      	
+      	this.panel.element.oncontextmenu = (event) => {
+            if (event.which == 3) {
+                event.stopPropagation();
+                const fileDropdown = new FileDropdown(event, null, this);
+                return false;
+            }
+        }
+      	
         return this;
     }
 
@@ -22,18 +30,16 @@ class FileBrowser extends Window{
   
   	parseFiles(files){
       	if(this.currentDir.length > 0){
-        	this.panel.addChild(new FileItem(null, this));
+            this.panel.addChild(new FileItem(null, this));
         }
-      
-      
-    	files.forEach((file, index) => {
+        
+        files.forEach((file, index) => {
           	if(file.isDir){
             	this.panel.addChild(new FileItem(file, this));
             }
-        	
         });
       
-    	files.forEach((file, index) => {
+        files.forEach((file, index) => {
           	if(!file.isDir){
             	this.panel.addChild(new FileItem(file, this));
             }
@@ -60,29 +66,23 @@ class FileBrowser extends Window{
     }
   
     open(name){
-        let curDir = this.pwd();
-		app.reqManager.get("api/file/"+name+"?cd="+curDir, (request) => {
-             if(request.status == 200){
-                let file = request.responseText;
-                this.editApp.open(file);
-                console.log(file);
-            } else {
-                //handleError(request);
-            }       
-        });
-		/*
-        var existingTab = null;
-        var i = 0;
-        while(i < currentTabs.length){
-            if(currentTabs[i].name  == name && currentTabs[i].dir == curDir){
-                existingTab = currentTabs[i];
-                i = currentTabs.length;
-            }
-            i++; 
-        }*/
-
-
-
-    };  
-  	
+        let file = {}
+        file.dir = this.pwd();
+        file.name = name;
+        
+        const openEditor = this.editApp.getOpen(file);
+        
+        if(openEditor){
+            openEditor.tab.activate();
+        } else {
+            app.reqManager.get("api/file/"+file.name+"?cd="+file.dir, (request) => {
+                 if(request.status == 200){
+                   	file.data = request.responseText;
+                    this.editApp.open(file);
+                } else {
+                    //handleError(request);
+                }       
+            });            
+        }
+    }
 }
