@@ -12,7 +12,10 @@ class Alarms extends BaseApp{
           	"/apps/edit/editorwindow.js",
           	"/apps/edit/filebrowser.js",
           	"/apps/edit/fileitem.js",
-          	"/apps/edit/filedropdown.js"
+          	"/apps/edit/filedropdown.js",
+          	"/apps/edit/newfilemodal.js",
+          	"/apps/edit/newdirmodal.js",
+          	"/apps/edit/deletemodal.js"
         ], null, true);
     }
   

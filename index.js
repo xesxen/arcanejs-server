@@ -123,7 +123,6 @@ var server = app.listen(port);
 console.log("Started on port "+ port);
 var io = require('socket.io')(server);
 
-
 //Session stuff
 function newSession(user){
 	var session = {};
@@ -161,8 +160,6 @@ var checkSession = function(req,  res, checkCsrf, callback){
     }	 
 }
 
-
- 
 //API routes
 app.get('/api/apps', function (req, res) {
     checkSession(req, res, true, function(session){
@@ -242,10 +239,8 @@ app.post('/api/newDir', function(req, res){
              	 res.send("Directory exists!");
             }
 		});
-
 	});
 });
-
 
 app.post('/api/delete', function(req, res){    
 	checkSession(req, res, true, function(session){
@@ -266,8 +261,6 @@ app.post('/api/delete', function(req, res){
 		});
 	});
 });
-
-
 
 app.post('/api/reauth', function(req, res){    
 	checkSession(req, res, false, function(session){
@@ -316,17 +309,17 @@ var getFiles = function(dir, files_){
 }
 
 var deleteFolderRecursive = function(path) {
-  if( fs.existsSync(path) ) {
-    fs.readdirSync(path).forEach(function(file,index){
-      var curPath = path + "/" + file;
-      if(fs.lstatSync(curPath).isDirectory()) { // recurse
-        deleteFolderRecursive(curPath);
-      } else { // delete file
-        fs.unlinkSync(curPath); //TODO: Fix directory traversal
-      }
-    });
-    fs.rmdirSync(path);
-  }
+    if( fs.existsSync(path) ) {
+        fs.readdirSync(path).forEach(function(file,index){
+            var curPath = path + "/" + file;
+            if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                deleteFolderRecursive(curPath);
+            } else { // delete file
+                fs.unlinkSync(curPath); //TODO: Fix directory traversal
+            }
+        });
+        fs.rmdirSync(path);
+    }
 };
 
 // Websocket stuffs

@@ -26,7 +26,7 @@ class FileItem extends Div{
         this.element.oncontextmenu = (event) => {
             if (event.which == 3) {
                 event.stopPropagation();
-                const fileDropdown = new FileDropdown(event, this.file, this);
+                const fileDropdown = new FileDropdown(event, this.file, this.fileBrowser);
                 return false;
             }
         }

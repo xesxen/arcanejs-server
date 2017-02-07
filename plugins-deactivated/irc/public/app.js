@@ -1,24 +1,25 @@
-class Irc{
+class Irc extends BaseApp{
   	constructor(){
+  	    super("fire");
+  	    
+  	    include([
+          	"/apps/irc/irc.css",
+          	"/apps/irc/window.js",
+            "/apps/irc/channelwindow.js"
+        ], null, true);
+  	    
       	this.nick = "";
       	this.channels = {};
-      	app.loader.loadStyles(["apps/irc/irc.css"], () => {
-  			app.loader.loadScripts(["apps/irc/window.js","apps/irc/channelwindow.js"], () => { this.init() });      
-        });
     }
   
   	init(){
-        let view = new View( );
-      	let item = new NavBarItem( new Glyphicon("edit"), app.navBarApp.navBar, view );
-      	let frameSet = new FrameSet( true, view, view);
-      	item.handleClick();     
-      		
+      	let frameSet = new FrameSet( true, this.view, this.view);
       	let frame = new Frame( frameSet );
       	frameSet.addFrame( frame, 1 );
 
 		this.statusWindow = new IrcWindow("status");
       
-      	this.tabGroup = new TabGroup( view, this.statusWindow.tab );
+      	this.tabGroup = new TabGroup( this.view, this.statusWindow.tab );
       	frame.setContent ( this.tabGroup );
       	
         app.socketManager.emit("irc connect","irc.smurfnet.ch");
