@@ -34,7 +34,7 @@ class Alarms extends BaseApp{
       	frameSet.addFrame( bottomFrame, 0.3 );
       
         let mainFrame = new Frame( frameSet );
-      	this.mainFrame = mainFrame;
+      	//this.mainFrame = mainFrame;
       	mainFrame.setContent ( new TabGroup( this.view, null ) );
       	frameSet.addFrame( mainFrame, 0.8 );
       
@@ -65,7 +65,7 @@ class Alarms extends BaseApp{
   	open(file){
         let editorWindow = new EditorWindow(file, this);
         this.openFiles.push(editorWindow);
-        this.mainFrame.content.addTab(editorWindow.tab);//TODO: Check if main frame exists...
+        this.view.frames[this.view.frames.length - 1].content.addTab(editorWindow.tab);
         this.setFocus(editorWindow);
     }
     
