@@ -6,7 +6,7 @@ class SocketManager{
 
   	connect(){
       	if(!this.socket){
-        	this.socket = io("/", {query:"csrftoken="+ this.app.sessionManager.csrfToken }); 
+        	this.socket = io("/", {query:"csrftoken="+ this.app.sessionManager.csrfToken });
         }
     }
   
