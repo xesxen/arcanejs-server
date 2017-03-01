@@ -27,9 +27,12 @@ class ReqManager{
 		Httpreq.send(null);
     }
 
-    post( url , data, callback){
-      	let loadingBar = new LoadingBar();
-      	console.log("post");
+    post( url , data, callback, hideLoadingbar){
+        let loadingBar = null;
+        if(hideLoadingbar === undefined){
+            loadingBar = new LoadingBar();
+        }
+        
         let Httpreq = new XMLHttpRequest();
         Httpreq.open("POST", url ,true);
         Httpreq.setRequestHeader("X-Csrf-Token", this.app.sessionManager.csrfToken);
@@ -37,7 +40,10 @@ class ReqManager{
 
          Httpreq.onload = (e) => {
           if (Httpreq.readyState === 4) {
-              loadingBar.done();
+              if(loadingBar){
+                   loadingBar.done();
+              }
+             
               callback(Httpreq);
           }
         };
