@@ -17,7 +17,7 @@ class NewFileModal extends Modal{
         }
         
         this.ok = new Button("Submit");
-        this.ok.onClick = () => {this.submit()};
+        this.ok.onClick = this.submit;
         this.footer.addChild(this.ok);
     }
     
