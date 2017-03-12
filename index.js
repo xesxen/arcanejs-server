@@ -119,9 +119,7 @@ function getUser(name){
   	return found;
 }
 
-var server = app.listen(port);
-console.log("Started on port "+ port);
-var io = require('socket.io')(server);
+
 
 //Session stuff
 function newSession(user){
@@ -322,10 +320,14 @@ var deleteFolderRecursive = function(path) {
     }
 };
 
+//var server = app.listen(port);
+var server = require('http').createServer(app);
+var io = require('socket.io')(server);
+
 // Websocket stuffs
 io.use(function(socket, next){
   	//Check if the user is authenticated
-  	var sessionId = socket.request.headers.cookie.split("sessionId=")[1];
+  	var sessionId = socket.request.headers.cookie.split("sessionId=")[1].split(";")[0];
   	var csrfToken = socket.handshake.query.csrftoken;
   	var session = sessions[sessionId];
   
@@ -354,3 +356,9 @@ io.on('connection', function(socket) {
       	console.log(socket.session.username +'disconnect');
 	});
 });
+
+
+
+
+server.listen(port);
+console.log("Started on port "+ port);

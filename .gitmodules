@@ -1,0 +1,3 @@
+[submodule "public/lib/arcanejs-ui"]
+	path = public/lib/arcanejs-ui
+	url = https://github.com/flunk/arcanejs-server.git

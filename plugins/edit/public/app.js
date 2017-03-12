@@ -1,4 +1,4 @@
-class Alarms extends BaseApp{
+class Editor extends BaseApp{
   	constructor(){
 		super("edit");
       
@@ -8,7 +8,6 @@ class Alarms extends BaseApp{
 		include([
           	"/apps/edit/alarms.css",
           	"/apps/edit/window.js",
-            "/apps/edit/alarmitem.js",
           	"/apps/edit/editorwindow.js",
           	"/apps/edit/filebrowser.js",
           	"/apps/edit/fileitem.js",
@@ -106,4 +105,4 @@ class Alarms extends BaseApp{
     }
 }
 
-new Alarms();
+new Editor();
