@@ -1,6 +1,6 @@
 class Editor extends BaseApp{
   	constructor(){
-		super("edit");
+		super("edit", "Editor");
       
       	this.openFiles = [];
       	this.focussedEditor = null;
