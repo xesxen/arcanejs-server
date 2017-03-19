@@ -125,6 +125,7 @@ class Includer{
       
       	if(src.endsWith(".js")){
         	el = document.createElement( 'script' );
+        	el.setAttribute("data-presets", "es2017");
             el.onload = () => {
                 this.done();
             };

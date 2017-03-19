@@ -44,8 +44,8 @@ class Ticker{
     }
     
     update(){
-        this.topTicker.targetX = this.topTicker.targetX - 1;
-        this.bottomTicker.targetX = this.bottomTicker.targetX - 0.5;
+        this.topTicker.targetX = this.topTicker.targetX - 1.5;
+        this.bottomTicker.targetX = this.bottomTicker.targetX - 1;
         
         this.updateTicker(this.topTicker);
         this.updateTicker(this.bottomTicker);
