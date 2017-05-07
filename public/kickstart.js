@@ -26,6 +26,7 @@ manifest = [
     "lib/arcanejs-ui/js/bootstrap/modal.js",
     "lib/arcanejs-ui/js/bootstrap/dropdown.js",
     "lib/arcanejs-ui/js/bootstrap/dropdownitem.js",
+    "lib/arcanejs-ui/js/bootstrap/dropdownselect.js",
     "lib/arcanejs-ui/js/bootstrap/glyphicon.js",
   	"lib/arcanejs-ui/js/ui/baseapp.js",
     "lib/arcanejs-ui/js/ui/panel.js",
