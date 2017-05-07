@@ -139,7 +139,10 @@ var checkSession = function(req,  res, checkCsrf, callback){
       	if(sessions[req.cookies.sessionId].loggedIn){
         	if(checkCsrf){
               	if(req.get("X-Csrf-Token") == sessions[req.cookies.sessionId].csrfToken){
-                  	callback(sessions[req.cookies.sessionId]);
+              	    let session = sessions[req.cookies.sessionId]
+              	    req.session = session;
+              	    res.session = session;
+                  	callback(session);
                 } else {
                   	res.statusCode = 401;
                 	res.send("Incorrect CSRF Token");
@@ -155,8 +158,10 @@ var checkSession = function(req,  res, checkCsrf, callback){
     } else {
       	res.statusCode = 401;
     	res.send("Session unknown");
-    }	 
+    }
 }
+
+app.checkSession = checkSession;
 
 //API routes
 app.get('/api/apps', function (req, res) {

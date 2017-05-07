@@ -3,10 +3,10 @@ class Editor extends BaseApp{
 		super("edit", "Editor");
       
       	this.openFiles = [];
-      	this.focussedEditor = null;
+      	this.focussedEditor = undefined;
       	
 		include([
-          	"/apps/edit/alarms.css",
+		    "/lib/xterm.js/dist/xterm.css",
           	"/apps/edit/window.js",
           	"/apps/edit/editorwindow.js",
           	"/apps/edit/filebrowser.js",
@@ -14,7 +14,10 @@ class Editor extends BaseApp{
           	"/apps/edit/filedropdown.js",
           	"/apps/edit/newfilemodal.js",
           	"/apps/edit/newdirmodal.js",
-          	"/apps/edit/deletemodal.js"
+          	"/apps/edit/deletemodal.js",
+          	"/lib/xterm.js/dist/xterm.js",
+          	"/apps/edit/terminal.js",
+          	"/apps/edit/alarms.css"
         ], null, true);
     }
   
@@ -43,9 +46,15 @@ class Editor extends BaseApp{
                 e.preventDefault();
                 this.save();
             }
+            
+            if (e.keyCode == 192 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openTerminal();
+            }
+            
           	return false;
       	});
-      
     }
     
     close(editor){
@@ -66,6 +75,12 @@ class Editor extends BaseApp{
         this.openFiles.push(editorWindow);
         this.view.frames[this.view.frames.length - 1].content.addTab(editorWindow.tab);
         this.setFocus(editorWindow);
+    }
+    
+    openTerminal(){
+        let terminalWindow = new TerminalWindow(this);
+        this.view.frames[this.view.frames.length - 1].content.addTab(terminalWindow.tab);
+        this.setFocus(terminalWindow);
     }
     
     getOpen(file){
@@ -96,8 +111,10 @@ class Editor extends BaseApp{
   
   	setFocus(editor){
     	if(editor != this.focussedEditor){
-          	if(this.focussedEditor !== null){
-            	this.focussedEditor.unFocus();
+          	if(this.focussedEditor !== undefined){
+          	    if(this.focussedEditor.unFocus !== undefined){
+          	        this.focussedEditor.unFocus();
+          	    }
             }
           	
         	this.focussedEditor = editor;
