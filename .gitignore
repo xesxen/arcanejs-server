@@ -38,3 +38,6 @@ jspm_packages
 
 # persist local storage dir
 persist
+
+
+plugins
