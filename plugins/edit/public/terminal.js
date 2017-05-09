@@ -9,12 +9,14 @@ class TerminalWindow extends Window{
         this.term.resize(80, 30);
         this.term.focus();
         this.id = null;
+        this.term.setOption("disableStdin", true);
+
         app.reqManager.get("/api/edit/newterminal", (res) => {
             if(res.status === 200){
                 this.id = JSON.parse(res.response).id;
                 app.socketManager.emit("terminal attach", this.id);
                 this.resize();
-                
+                this.term.focus();
             }
         });
 
@@ -25,7 +27,6 @@ class TerminalWindow extends Window{
         app.socketManager.socket.on("terminal data", (data) => {
             if(data.id == this.id){
                 this.term.write(data.data);
-                this.term.focus();
             }
         });
         
@@ -48,7 +49,7 @@ class TerminalWindow extends Window{
         this.tab.panel.handleActivate = () => {
             this.focus();
         }
-        
+        console.log("jemoeder");
     }
     
     resize(){
@@ -66,6 +67,7 @@ class TerminalWindow extends Window{
     }
   
   	unFocus(){
+  	    
     	this.tab.unFocus();
     }
     
