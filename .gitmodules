@@ -1,3 +1,6 @@
 [submodule "public/lib/arcanejs-ui"]
 	path = public/lib/arcanejs-ui
 	url = https://github.com/flunk/arcanejs-server.git
+[submodule "public/lib/xterm.js"]
+	path = public/lib/xterm.js
+	url = https://github.com/sourcelair/xterm.js.git
