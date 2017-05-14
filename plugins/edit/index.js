@@ -30,7 +30,18 @@ module.exports = function ( express, app, io ) {
         
         socket.on('terminal resize', (data) => {
       	    let term = edit.terminals[data.id];
-          	term.resize(data.cols, data.rows);
+      	    if(term !== undefined){
+      	        term.resize(data.cols, data.rows);
+      	    }
+          	
+        });
+        
+        socket.on('terminal close', (data) => {
+      	    console.log("Killing terminal with id " + data.id);
+      	    
+      	    let term = edit.terminals[data.id];
+      	    edit.terminals[data.id] = {id:-1};
+          	term.kill();
         });
     }
     
@@ -50,6 +61,19 @@ module.exports = function ( express, app, io ) {
             
             console.log("Forking new pty with id " + term.id + " for " + term.username )
             res.send({id:term.id});
+        });        
+    });
+    
+    app.get('/api/edit/openterminals', (req, res) => {    
+        app.checkSession(req, res, true, (session) => {
+            let found = [];
+            edit.terminals.forEach((terminal) => {
+                if(terminal.username == session.username){
+                    found.push(terminal.id);
+                } 
+            });
+
+            res.send({found:found});
         });        
     });
     

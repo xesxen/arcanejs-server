@@ -40,6 +40,8 @@ class Editor extends BaseApp{
       	mainFrame.setContent ( new TabGroup( this.view, null ) );
       	frameSet.addFrame( mainFrame, 0.8 );
       
+        this.terminals = [];
+        this.openTerminals();
       
       	document.addEventListener("keydown", (e) => {
       		if (e.keyCode == 83 && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
@@ -55,6 +57,30 @@ class Editor extends BaseApp{
             
           	return false;
       	});
+      	
+      	app.socketManager.socket.on("reconnect", ()=>{
+      	    this.attachTerminals();
+      	})
+    }
+    
+    attachTerminals(){
+        console.log("Reattaching to disconnected terminals")
+        this.terminals.forEach((terminal) => {
+            terminal.attach();
+        });       
+    }
+    
+    openTerminals(){
+        app.reqManager.get("/api/edit/openterminals", (res) => {
+            if(res.status === 200){
+                console.log(res);
+                this.ids = JSON.parse(res.response).found;
+                this.ids.forEach((id) => {
+                    console.log(id);
+                    this.openTerminal(id);
+                });
+            }
+        });        
     }
     
     close(editor){
@@ -77,8 +103,9 @@ class Editor extends BaseApp{
         this.setFocus(editorWindow);
     }
     
-    openTerminal(){
-        let terminalWindow = new TerminalWindow(this);
+    openTerminal(id){
+        let terminalWindow = new TerminalWindow(this, id);
+        this.terminals.push(terminalWindow);
         this.view.frames[this.view.frames.length - 1].content.addTab(terminalWindow.tab);
         this.setFocus(terminalWindow);
     }

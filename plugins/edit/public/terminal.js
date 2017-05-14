@@ -1,5 +1,5 @@
 class TerminalWindow extends Window{
-  	constructor(editApp){
+  	constructor(editApp, id){
       	super("Terminal");
         this.panel.addCssClass("terminalBackground");
         
@@ -8,17 +8,21 @@ class TerminalWindow extends Window{
         this.term.open(this.panel.element, true);
         this.term.resize(80, 30);
         this.term.focus();
-        this.id = null;
+        
+        if(id !== undefined){
+            this.id = id;
+            this.attach();
+        } else {
+            this.id = null;
+            app.reqManager.get("/api/edit/newterminal", (res) => {
+                if(res.status === 200){
+                    this.id = JSON.parse(res.response).id;
+                    this.attach();
+                }
+            });
+        }
+        
         this.term.setOption("disableStdin", true);
-
-        app.reqManager.get("/api/edit/newterminal", (res) => {
-            if(res.status === 200){
-                this.id = JSON.parse(res.response).id;
-                app.socketManager.emit("terminal attach", this.id);
-                this.resize();
-                this.term.focus();
-            }
-        });
 
         this.term.on('key', (e) =>{
             app.socketManager.emit("terminal key",{id:this.id, key:e});
@@ -34,7 +38,7 @@ class TerminalWindow extends Window{
             this.resize();
         }
         
-        this.tab.close = () => {
+        this.tab.onClose = () => {
             this.close();
         }
         
@@ -49,7 +53,12 @@ class TerminalWindow extends Window{
         this.tab.panel.handleActivate = () => {
             this.focus();
         }
-        console.log("jemoeder");
+    }
+    
+    attach(){
+        app.socketManager.emit("terminal attach", this.id);
+        this.resize();
+        this.term.focus();
     }
     
     resize(){
@@ -64,14 +73,15 @@ class TerminalWindow extends Window{
       	this.editApp.setFocus(this);
       	this.tab.focus();
       	this.term.focus();
+      	this.resize();
     }
   
   	unFocus(){
-  	    
     	this.tab.unFocus();
     }
     
     close(){
+        app.socketManager.emit("terminal close",{id:this.id});
         this.editApp.close(this);
     }
 }
