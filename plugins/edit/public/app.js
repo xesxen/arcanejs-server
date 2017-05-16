@@ -15,6 +15,7 @@ class Editor extends BaseApp{
           	"/apps/edit/newfilemodal.js",
           	"/apps/edit/newdirmodal.js",
           	"/apps/edit/deletemodal.js",
+          	"/apps/edit/reconnectmodal.js",
           	"/lib/xterm.js/dist/xterm.js",
           	"/apps/edit/terminal.js",
           	"/apps/edit/alarms.css"
@@ -75,10 +76,9 @@ class Editor extends BaseApp{
             if(res.status === 200){
                 console.log(res);
                 this.ids = JSON.parse(res.response).found;
-                this.ids.forEach((id) => {
-                    console.log(id);
-                    this.openTerminal(id);
-                });
+                if(this.ids.length > 0){
+                    new ReconnectModal(this, this.ids);
+                }
             }
         });        
     }
@@ -90,7 +90,6 @@ class Editor extends BaseApp{
                 this.openFiles.splice(i,1);
                 this.focussedEditor = null;
                 i = this.openFiles.length;
-                
             }
             i++;
         }

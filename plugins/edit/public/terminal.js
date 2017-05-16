@@ -2,12 +2,16 @@ class TerminalWindow extends Window{
   	constructor(editApp, id){
       	super("Terminal");
         this.panel.addCssClass("terminalBackground");
+
+
         
         this.editApp = editApp;
         this.term = new Terminal();
         this.term.open(this.panel.element, true);
         this.term.resize(80, 30);
         this.term.focus();
+        
+        this.dirty = false;
         
         if(id !== undefined){
             this.id = id;
@@ -50,6 +54,41 @@ class TerminalWindow extends Window{
             this.unFocus(); 
         });
         
+        document.addEventListener('paste', (event) => {
+            var clipText = event.clipboardData.getData('Text');
+            if(event.path[0] == this.term.textarea){
+                app.socketManager.emit("terminal key",{id:this.id, key:clipText});
+            }
+        }, true);
+        
+        console.log(this.term);
+      /*  this.term.element.addEventListener("mouseup", (e) =>{
+            console.log(e);
+            if(e.button == 0 && this.dirty){
+                try {  
+                    var successful = document.execCommand('copy');
+                    this.dirty = false;
+                    console.log("jemoeder")
+                } catch(err) {  
+                    console.log(err);  
+                }                
+            } else if(e.button == 2){
+                e.preventDefault();
+                console.log(window.clipboardData.getData('Text'));
+                return false;
+            }
+        });
+*/
+
+  /*
+  
+        document.addEventListener("selectionchange", (e) =>{
+            let selection = window.getSelection();
+            if(selection.focusNode.parentNode.parentNode.parentNode == this.term.element){
+                this.dirty = true;
+            }
+        });
+                */
         this.tab.panel.handleActivate = () => {
             this.focus();
         }

@@ -15,11 +15,12 @@ module.exports = function ( express, app, io ) {
   	edit.handleNewSocket = ( socket ) => {
         socket.on('terminal attach', (id) => {
             let term = edit.terminals[id];
-            
-            if(socket.session.username == term.username){
-                term.on('data', (data) => {
-                    socket.emit("terminal data",{id:term.id, data:data});
-                });            
+            if(term !== undefined){
+                if(socket.session.username == term.username){
+                    term.on('data', (data) => {
+                        socket.emit("terminal data",{id:term.id, data:data});
+                    });            
+                }                
             }
         });
       
@@ -37,7 +38,7 @@ module.exports = function ( express, app, io ) {
         });
         
         socket.on('terminal close', (data) => {
-      	    console.log("Killing terminal with id " + data.id);
+      	    console.log("Killing pty with id " + data.id);
       	    
       	    let term = edit.terminals[data.id];
       	    edit.terminals[data.id] = {id:-1};
