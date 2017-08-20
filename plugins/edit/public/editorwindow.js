@@ -20,6 +20,7 @@ class EditorWindow extends Window{
       	this.isClean = true;
       	this.editApp = editApp;
         this.editor = ace.edit(this.panel.element);
+        
         this.editor.setTheme("ace/theme/merbivore_soft");
         
         const splitName = file.name.split(".");

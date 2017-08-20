@@ -1,7 +1,10 @@
 manifest = [
     "lib/arcanejs-ui/css/bootstrap.min.js",
     "lib/ace/ace.js",
-    "/socket.io/socket.io.js",
+    "lib/ace/ext-language_tools.js",
+    "lib/arcanejs-ui/css/bootstrap-cyborg.css",
+    "lib/arcanejs-ui/css/elementjs.css",
+    "lib/arcanejs-ui/css/bsoverride.css",    
   	"lib/morrisjs/morris.css",
   	"lib/morrisjs/raphael-min.js",  
     "lib/morrisjs/morris.min.js",
@@ -98,8 +101,7 @@ class LoadingBar{
         } else {
           	this.bar.style.transition = "opacity 0.5s linear";         
           	this.bar.style.opacity = 0;
-          
-          	setTimeout(() => { document.body.removeChild(this.bar) }, 500);
+          	setTimeout(() => { this.bar.remove() }, 500);
         }
     }
 }
@@ -154,7 +156,6 @@ class Includer{
     }
 
   	done(){
-      	
     	this.loaded++;
       	if(this.loaded == this.total){
           	if(this.loadingBar){
@@ -170,12 +171,63 @@ class Includer{
     }
 }
 
+class PackageLoader{
+	constructor(manifest, callback, hideLoadingBar){
+      	this.callback = callback;
+
+       	if(hideLoadingBar !== true){
+        	this.loadingBar = new LoadingBar(); 	
+        }
+        
+        this.getPack(manifest, (res)=>{
+            let pack = JSON.parse(res.responseText);
+            console.log(pack);
+            let pacLocation = "/api/cache/pack/" + pack.hash;
+            new Includer([pacLocation + ".css",pacLocation + ".js"], ()=>{
+                if(callback){
+                    callback();
+                }
+                
+            }, true);
+        });
+        
+    	return this;
+    }
+    
+    getPack(manifest, callback){
+        let Httpreq = new XMLHttpRequest();
+        Httpreq.open("POST", "/api/cache/getpackhash" ,true);
+        Httpreq.setRequestHeader("Content-Type", "application/json");
+        
+         Httpreq.onload = (e) => {
+          if (Httpreq.readyState === 4) {
+              callback(Httpreq);
+          }
+        };
+      
+        Httpreq.onerror = (e) => {
+        	console.error(xhr.statusText);
+          	callback(null);
+        };     
+      	Httpreq.send(JSON.stringify({manifest:manifest, timeStamp:0}));
+    }
+}
+
+getURLParameterByName = function(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
 include = function(manifest, callback, hideLoadingBar){
-	new Includer(manifest, callback, hideLoadingBar);
+	if(getURLParameterByName("debug") == 1){
+	    new Includer(manifest, callback, hideLoadingBar);
+	} else {
+	    new PackageLoader(manifest, callback, hideLoadingBar);
+	}
 }
 
 document.body.onload = function(){
     include(manifest, () => {
-        app = new App();
-    }, false);
+       app = new App();
+    }, true);
 }

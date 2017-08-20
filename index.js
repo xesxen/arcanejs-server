@@ -16,8 +16,12 @@ var path = require('path');
 var plugins = [];
 
 app.use(express.static('public'));
+
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(cookieParser());
+
+
 
 storage.initSync();
 
@@ -362,8 +366,7 @@ io.on('connection', function(socket) {
 	});
 });
 
-
-
+require("./inc/cache.js")( express, app, io, rootDir );;
 
 server.listen(port);
 console.log("Started on port "+ port);

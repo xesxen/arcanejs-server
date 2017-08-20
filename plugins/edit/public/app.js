@@ -7,6 +7,7 @@ class Editor extends BaseApp{
       	
 		include([
 		    "/lib/xterm.js/dist/xterm.css",
+		    "/apps/edit/alarms.css",
           	"/apps/edit/window.js",
           	"/apps/edit/editorwindow.js",
           	"/apps/edit/filebrowser.js",
@@ -17,8 +18,7 @@ class Editor extends BaseApp{
           	"/apps/edit/deletemodal.js",
           	"/apps/edit/reconnectmodal.js",
           	"/lib/xterm.js/dist/xterm.js",
-          	"/apps/edit/terminal.js",
-          	"/apps/edit/alarms.css"
+          	"/apps/edit/terminal.js"
         ], null, true);
     }
   
@@ -58,6 +58,9 @@ class Editor extends BaseApp{
             
           	return false;
       	});
+      	
+      	ace.config.set("basePath", "/lib/ace");
+      	ace.require("ace/edit_session").EditSession.prototype.$startWorker = function(){}
       	
       	app.socketManager.socket.on("reconnect", ()=>{
       	    this.attachTerminals();
@@ -137,7 +140,7 @@ class Editor extends BaseApp{
   
   	setFocus(editor){
     	if(editor != this.focussedEditor){
-          	if(this.focussedEditor !== undefined){
+          	if(this.focussedEditor !== undefined && this.focussedEditor !== null){
           	    if(this.focussedEditor.unFocus !== undefined){
           	        this.focussedEditor.unFocus();
           	    }

@@ -14,6 +14,22 @@ class LoginScreen extends Modal {
         this.body.addChild( new Br() );
       	this.body.addChild( new Br() );
       	this.body.addChild( this.tokenField );
+      	
+      	
+      	this.tokenField.element.addEventListener("keyup", (event) => {
+            event.preventDefault();
+            if (event.keyCode == 13) {
+                this.handleLogin();
+            }
+        });
+        
+        this.passwordField.element.addEventListener("keyup", (event) => {
+            event.preventDefault();
+            if (event.keyCode == 13) {
+                
+                this.handleLogin();
+            }
+        });
       
       	this.loginButton.element.addEventListener("click", (e) => this.handleLogin(e) );
       	this.footer.addChild( this.loginButton );
