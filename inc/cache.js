@@ -5,8 +5,11 @@ class Cache {
         this.express = express;
         this.app = app;
         this.io = io;
-        this.rootDir = rootDir;
-        
+
+        let fs = require('fs'),
+        let path = require('path');     
+        this.rootDir = path.dirname(fs.realpathSync(__filename));
+   
         console.log("Initialising cache...");
         this.items = {};
         
