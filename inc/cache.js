@@ -8,7 +8,7 @@ class Cache {
 
         let fs = require('fs');
         let path = require('path');     
-        this.rootDir = path.dirname(fs.realpathSync(__filename));
+        this.rootDir = path.dirname(fs.realpathSync(__filename)) + "/../";
    
         console.log("Initialising cache...");
         this.items = {};
