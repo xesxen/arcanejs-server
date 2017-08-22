@@ -1,8 +1,6 @@
 manifest = [
-    "lib/arcanejs-ui/css/bootstrap.min.js",
     "lib/ace/ace.js",
     "lib/ace/ext-language_tools.js",
-    "lib/arcanejs-ui/css/bootstrap-cyborg.css",
     "lib/arcanejs-ui/css/elementjs.css",
     "lib/arcanejs-ui/css/bsoverride.css",    
   	"lib/morrisjs/morris.css",
@@ -45,7 +43,7 @@ manifest = [
     "net/reqmanager.js",
     "net/sessionmanager.js",
     "net/socketmanager.js",
-    "net/loader.js",  
+    "net/loader.js",
 	"app.js"
 ];
 
@@ -149,10 +147,6 @@ class Includer{
             	this.callback(false); 
             }
         }
-
-      	//if(this.manifest.length > 0){
-        	//this.load();
-        //}
     }
 
   	done(){

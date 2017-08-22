@@ -2,13 +2,14 @@ class Cache {
     constructor(express, app, io, rootDir){
         let md5 = require('md5');
         this.fs = require('fs');
+        this.resolve = require("path").resolve;
         this.express = express;
         this.app = app;
         this.io = io;
 
         let fs = require('fs');
         let path = require('path');     
-        this.rootDir = path.dirname(fs.realpathSync(__filename)) + "/../";
+        this.rootDir = this.resolve(path.dirname(fs.realpathSync(__filename)) + "/../");
    
         console.log("Initialising cache...");
         this.items = {};
@@ -71,18 +72,22 @@ class Cache {
                 file = file.replace("/apps/"+pluginName, pluginName+"/public");
             }
             
-            let fullPath = this.rootDir + subDir + file; //TODO: Fix directory traversal
-            if(file.endsWith(".js")){
-                result.js += this.fs.readFileSync(fullPath);
-                
-            } else if(file.endsWith(".css")){
-                console.log(fullPath);
-                let css = this.fs.readFileSync(fullPath);
-                this.fs.readFileSync(fullPath);
-                result.css += css;
+            let fullPath = this.rootDir + subDir + file;
+            let absolutePath = this.resolve(fullPath);
+            
+            //Check for directory traversal
+            if(absolutePath.startsWith(this.rootDir + subDir)){
+                if(file.endsWith(".js")){
+                    result.js += this.fs.readFileSync(fullPath);
+                    
+                } else if(file.endsWith(".css")){
+                    
+                    let css = this.fs.readFileSync(fullPath);
+                    this.fs.readFileSync(fullPath);
+                    result.css += css;
+                }                
             }
         }
-        
         return result;
     }
 }

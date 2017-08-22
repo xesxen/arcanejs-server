@@ -8,9 +8,8 @@ var fs = require('fs');
 var express = require('express');
 var speakeasy = require("speakeasy");
 var qrcode = require('qrcode-terminal');
-
+var resolve = require("path").resolve;
 var app = express();
-
 var bodyParser = require('body-parser');
 var path = require('path');
 var plugins = [];
@@ -21,8 +20,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(cookieParser());
 
-
-
 storage.initSync();
 
 //User stuff
@@ -31,6 +28,8 @@ var sessions = storage.getItem('sessions');
 var port = storage.getItem('port');
 var rootDir = storage.getItem('rootDir');
 var test = storage.getItem('jemoeder');
+var twoFactorEnabled = storage.getItem('twoFactorEnabled');
+
 
 function loadPlugins(){
     var files = fs.readdirSync(__dirname +"/plugins" );
@@ -39,7 +38,7 @@ function loadPlugins(){
         var name = __dirname + '/plugins/' + files[i];
 
         if( fs.statSync(name).isDirectory() ){
-          	var plugin = require(  "./plugins/" + files[i] + "/index.js")( express, app, io );;
+          	var plugin = require(  "./plugins/" + files[i] + "/index.js")( express, app, io );
           	console.log(plugin.name);
           	plugins.push( plugin );
         }
@@ -54,6 +53,9 @@ if(sessions == undefined){
 	sessions = {}; 
 }
 
+//rootDir = resolve(rootDir);
+
+
 loadPlugins();
 
 function firstRun(){
@@ -64,6 +66,26 @@ function firstRun(){
     storage.setItem('port',port);
 	rootDir = readlineSync.question('Root directory : ');
     storage.setItem('rootDir',rootDir);
+    twoFactorEnabled = readlineSync.question('Enable 2 Factor authentication? : ');
+    storage.setItem('rootDir',rootDir);
+}
+
+function twoFactorDialog(){
+    let done = false;
+    let enable2fa = true;
+    let answer = null;
+    
+    while(!done){
+        answer = readlineSync.question('Enable 2 Factor authentication? (yes/no): ');
+        if(answer == "yes"){
+            done = true;
+        } else if(answer == "yes"){
+            enable2fa = false;
+            done = true;
+        }
+    }
+    
+    return enable2fa;
 }
 
 function addUserDialog(){
@@ -123,8 +145,6 @@ function getUser(name){
   	return found;
 }
 
-
-
 //Session stuff
 function newSession(user){
 	var session = {};
@@ -176,96 +196,133 @@ app.get('/api/apps', function (req, res) {
           	names.push(plugins[i].name);
         	i++ 
         }
-      	res.send(names);
+      	res.send(names); //TODO: Cache this
     });
 });
 
 app.get('/api/dir', function (req, res) {
     checkSession(req, res, true, function(session){
-      	console.log("Getdir " + rootDir + req.query.cd);
-      	//TODO: Fix directory traversal
+      	let fullPath = resolve(rootDir + req.query.cd);
+      
+      	if(fullPath.startsWith(rootDir)){
+      	    console.log("Getdir " + fullPath);
+      	    res.sendFile(fullPath);
+      	} else {
+      	    res.statusCode = 403;
+            res.send("Forbidden");
+      	}
       	res.send(getFiles(rootDir + req.query.cd));
     });
 });
 
 app.get('/api/file/:name', function (req, res) {
     checkSession(req,res, true,function(session){
-    	console.log("Getfile " + rootDir + req.query.cd + req.params.name);
-      	//TODO: Fix directory traversal
-      	res.sendFile(rootDir + req.query.cd + req.params.name)
+      	let fullPath = resolve(rootDir + req.query.cd + req.params.name);
+      	
+      	if(fullPath.startsWith(rootDir)){
+      	    console.log("Getfile " + fullPath);
+      	    res.sendFile(fullPath);
+      	} else {
+      	    res.statusCode = 403;
+            res.send("Forbidden");
+      	}
     });
 });
 
 app.post('/api/save/:name', function(req, res){    
 	checkSession(req, res, true, function(session){
-      	console.log("Saving " + rootDir + req.query.cd + req.params.name);
-      	//TODO: Fix directory traversal
-        fs.writeFile(rootDir + req.query.cd + req.params.name, req.body.data, function (err,data) {
-            if (err) {
-              	res.statusCode = 400;
-                res.send("Error saving");
-            } else {
-              	io.sockets.emit('refresh', 'now');
-                res.send(true);
-            }
-        });
+        let fullPath = resolve(rootDir + req.query.cd + req.params.name);
+
+      	if(fullPath.startsWith(rootDir)){
+      	    console.log("Saving " + fullPath);
+            fs.writeFile(fullPath, req.body.data, function (err,data) {
+                if (err) {
+                  	res.statusCode = 500;
+                    res.send("Error saving");
+                } else {
+                  	io.sockets.emit('refresh', 'now');
+                    res.send(true);
+                }
+            });      	    
+      	} else {
+      	    res.statusCode = 403;
+            res.send("Forbidden");
+      	}
 	});
 });
 
 app.post('/api/newFile/:name', function(req, res){    
 	checkSession(req, res, true, function(session){
-      	console.log("Creating New File " + rootDir + req.query.cd + req.params.name);
-        fs.lstat(rootDir + req.query.cd + req.params.name, function(err, stats) {
-    		if (err) { //TODO: Fix directory traversal
-                fs.writeFile(rootDir + req.query.cd + req.params.name, req.body.data, function (err,data) {
-                    if (err) {
-                      	res.statusCode = 418;
-                        res.send("Error creating file");
-                    } else {
-                        res.send(true);
-                    }
-                });
-    		} else {
-              	 res.statusCode = 409;
-             	 res.send("File exists!");
-            }
-		});
-
+	    let fullPath = resolve(rootDir + req.query.cd + req.params.name);
+	    if(fullPath.startsWith(rootDir)){
+          	console.log("Creating New File " + fullPath);
+            fs.lstat(rootDir + req.query.cd + req.params.name, function(err, stats) {
+        		if (err) {
+                    fs.writeFile(fullPath, req.body.data, function (err,data) {
+                        if (err) {
+                          	res.statusCode = 418;
+                            res.send("Error creating file");
+                        } else {
+                            res.send(true);
+                        }
+                    });
+        		} else {
+                  	 res.statusCode = 409;
+                 	 res.send("File exists!");
+                }
+    		});
+	    } else {
+      	    res.statusCode = 403;
+            res.send("Forbidden");
+      	}
 	});
 });
 
 app.post('/api/newDir', function(req, res){    
 	checkSession(req, res, true, function(session){
-      	console.log("Creating New Directory " + rootDir + req.query.cd);
-        fs.lstat(rootDir + req.query.cd, function(err, stats) {
-    		if (err) {
-                 fs.mkdirSync(rootDir + req.query.cd); //TODO: Fix directory traversal
-              	 res.send(true);
-    		} else {
-              	 res.statusCode = 409;
-             	 res.send("Directory exists!");
-            }
-		});
+        let fullPath = resolve(rootDir + req.query.cd);
+	    if(fullPath.startsWith(rootDir)){	    
+          	console.log("Creating New Directory " + fullPath);
+            fs.lstat(rootDir + req.query.cd, function(err, stats) {
+        		if (err) {
+                     fs.mkdirSync(fullPath); 
+                  	 res.send(true);
+        		} else {
+                  	 res.statusCode = 409;
+                 	 res.send("Directory exists!");
+                }
+    		});
+	    } else {
+      	    res.statusCode = 403;
+            res.send("Forbidden");
+      	}
 	});
 });
 
 app.post('/api/delete', function(req, res){    
 	checkSession(req, res, true, function(session){
-      	console.log("Deleting " + rootDir + req.query.cd);
-        fs.lstat(rootDir + req.query.cd, function(err, stats) {
-    		if (!err) {
-              	 if(stats.isDirectory()){
-                 	 deleteFolderRecursive(rootDir + req.query.cd);
-                   	 res.send(true);
-                 } else {
-                     fs.unlinkSync(rootDir + req.query.cd); //TODO: Fix directory traversal
-                     res.send(true);
-                 }
-    		} else {
-              	 res.statusCode = 404;
-             	 res.send("File doesn't exist!");
-            }
-		});
+	    let fullPath = resolve(rootDir + req.query.cd);
+	    
+	    if(fullPath.startsWith(rootDir)){
+          	console.log("Deleting " + fullPath);
+            fs.lstat(fullPath, function(err, stats) {
+        		if (!err) {
+                  	 if(stats.isDirectory()){
+                     	 deleteFolderRecursive(fullPath);
+                       	 res.send(true);
+                     } else {
+                         fs.unlinkSync(fullPath);
+                         res.send(true);
+                     }
+        		} else {
+                  	 res.statusCode = 404;
+                 	 res.send("File doesn't exist!");
+                }
+    		});
+	    } else {
+      	    res.statusCode = 403;
+            res.send("Forbidden");
+      	}    	
 	});
 });
 
@@ -286,11 +343,18 @@ app.post('/api/login', function(req, res){
         if(checkPass(user, password)){
           	var session = newSession(user);
           	res.cookie("sessionId", session.uuid, { httpOnly: true });
-          	//if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
+          	if(twoFactorEnabled){
+          	    if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
+              	    console.log("Login " + user.name + " OK");
+            	    res.send({csrfToken:session.csrfToken});
+              	    loginOK = true;
+          	    }          	    
+          	} else {
               	console.log("Login " + user.name + " OK");
             	res.send({csrfToken:session.csrfToken});
               	loginOK = true;
-          	//}
+          	}
+
         }
     }
   	
@@ -303,29 +367,38 @@ app.post('/api/login', function(req, res){
 
 var getFiles = function(dir, files_){
     files_ = [];
-    var files = fs.readdirSync(dir); //TODO: Fix directory traversal
-    for (var i in files){
-        var file = {name:files[i]};
-        var name = dir + '/' + files[i];
-
-        file.isDir = fs.statSync(name).isDirectory();
-      
-        files_.push(file);
+    dir = resolve(dir);
+    
+    if(dir.startsWith(rootDir)){
+        var files = fs.readdirSync(dir);
+        for (var i in files){
+            var file = {name:files[i]};
+            var name = dir + '/' + files[i];
+    
+            file.isDir = fs.statSync(name).isDirectory();
+          
+            files_.push(file);
+        }        
     }
+    
     return files_;
 }
 
 var deleteFolderRecursive = function(path) {
-    if( fs.existsSync(path) ) {
-        fs.readdirSync(path).forEach(function(file,index){
-            var curPath = path + "/" + file;
-            if(fs.lstatSync(curPath).isDirectory()) { // recurse
-                deleteFolderRecursive(curPath);
-            } else { // delete file
-                fs.unlinkSync(curPath); //TODO: Fix directory traversal
-            }
-        });
-        fs.rmdirSync(path);
+    path = resolve(path);
+    
+    if(path.startsWith(rootDir)){
+        if( fs.existsSync(path) ) {
+            fs.readdirSync(path).forEach(function(file,index){
+                var curPath = path + "/" + file;
+                if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                    deleteFolderRecursive(curPath);
+                } else { // delete file
+                    fs.unlinkSync(curPath);
+                }
+            });
+            fs.rmdirSync(path);
+        }        
     }
 };
 
