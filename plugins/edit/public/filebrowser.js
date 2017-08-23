@@ -6,6 +6,8 @@ class FileBrowser extends Window{
       	this.currentDir = [];
       	this.updateFiles();
       	
+      	this.panel.addCssClass("scroll-y")
+      	
       	this.panel.element.oncontextmenu = (event) => {
             if (event.which == 3) {
                 event.stopPropagation();

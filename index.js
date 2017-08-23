@@ -30,6 +30,10 @@ var rootDir = storage.getItem('rootDir');
 var test = storage.getItem('jemoeder');
 var twoFactorEnabled = storage.getItem('twoFactorEnabled');
 
+var host = storage.getItem('host');
+var options = storage.getItem('options');
+
+
 
 function loadPlugins(){
     var files = fs.readdirSync(__dirname +"/plugins" );
@@ -53,6 +57,8 @@ if(sessions == undefined){
 	sessions = {}; 
 }
 
+
+
 //rootDir = resolve(rootDir);
 
 
@@ -61,31 +67,35 @@ loadPlugins();
 function firstRun(){
 	console.log("ArcaneJS-Server is run for the first time. Some variables need to be set before ArcaneJS can start.");
 	addUserDialog();
-  	
+	options = {};
+
    	port = readlineSync.question('HTTP Port to use : ');
-    storage.setItem('port',port);
+    	storage.setItem('port',port);
 	rootDir = readlineSync.question('Root directory : ');
-    storage.setItem('rootDir',rootDir);
-    twoFactorEnabled = readlineSync.question('Enable 2 Factor authentication? : ');
-    storage.setItem('rootDir',rootDir);
+    	storage.setItem('rootDir',rootDir);
+    
+    	options.twoFactorEnabled = askQuestion('Enable 2 Factor authentication? : ');
+    	options.host = readlineSync.question('Hostname to listen on: ');
+    
+    	storage.setItem('options',options);
 }
 
-function twoFactorDialog(){
+function askQuestion(question){
     let done = false;
-    let enable2fa = true;
+    let result = true;
     let answer = null;
     
     while(!done){
-        answer = readlineSync.question('Enable 2 Factor authentication? (yes/no): ');
+        answer = readlineSync.question(question);
         if(answer == "yes"){
             done = true;
         } else if(answer == "yes"){
-            enable2fa = false;
+            result = false;
             done = true;
         }
     }
     
-    return enable2fa;
+    return result;
 }
 
 function addUserDialog(){
@@ -341,27 +351,29 @@ app.post('/api/login', function(req, res){
   	
  	if(user != null){
         if(checkPass(user, password)){
-          	var session = newSession(user);
-          	res.cookie("sessionId", session.uuid, { httpOnly: true });
-          	if(twoFactorEnabled){
+          	if(options.twoFactorEnabled){
           	    if(speakeasy.totp.verify({ secret: user.secret, encoding: 'base32', token: token })){
-              	    console.log("Login " + user.name + " OK");
-            	    res.send({csrfToken:session.csrfToken});
-              	    loginOK = true;
-          	    }          	    
+          	    	console.log("Login " + user.name + " OK");
+          	    	var session = newSession(user);
+          	    	res.cookie("sessionId", session.uuid, { httpOnly: true });
+        	    	res.send({csrfToken:session.csrfToken});
+        	    	
+          	    } else {
+                    console.log("Login " + username + " 2FA incorrect!");
+                    res.statusCode = 401;
+                    res.send("Login failed");
+          	    }
           	} else {
               	console.log("Login " + user.name + " OK");
+              	var session = newSession(user);
+              	res.cookie("sessionId", session.uuid, { httpOnly: true });
             	res.send({csrfToken:session.csrfToken});
-              	loginOK = true;
-          	}
-
+          	} 
+	    } else {
+            console.log("Login " + username + " UNKNOWN!");
+            res.statusCode = 401;
+            res.send("Login failed");          	    
         }
-    }
-  	
-  	if(loginOK == false){
-        console.log("Login " + username + " UNKNOWN!");
-        res.statusCode = 401;
-        res.send("Login failed");
     }
 });
 
@@ -441,5 +453,5 @@ io.on('connection', function(socket) {
 
 require("./inc/cache.js")( express, app, io, rootDir );;
 
-server.listen(port);
+server.listen(port, options.host);
 console.log("Started on port "+ port);
