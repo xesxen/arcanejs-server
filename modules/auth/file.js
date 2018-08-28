@@ -16,7 +16,7 @@ class FileAuth {
         let user = this.getUser(username);
         this.checkPassword(user, password);
         this.check2fa(user, token);
-        return user;
+        return user.name;
     }
 
     getUser(username) {

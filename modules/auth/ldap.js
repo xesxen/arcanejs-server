@@ -1,26 +1,33 @@
 const storage = require('node-persist');
-const LdapAuth = require('ldapauth-fork');
+const ldap = require('ldapjs');
+const ldapEscape = require('ldap-escape');
+const debug = require('debug')('auth:ldap');
 
 
+class LdapAuth {
 
-class FileAuth {
     constructor(twoFactorEnabled) {
         this.config = storage.getItem('auth');
         this.twoFactorEnabled = twoFactorEnabled;
-
-        this.ldap = new LdapAuth(this.config.ldapAuth);
+        let clientOptions = {
+            url: this.config.ldapAuth.url,
+            tlsOptions: {
+                rejectUnauthorized: false
+            }
+        };
+        this.ldapClient = ldap.createClient(clientOptions);
     }
 
 
-    // TODO: Geen idee of dit werkt
-    // TODO: 2FA en ldap? Hoe?
     login(username, password, token) {
         return new Promise((resolve, reject) => {
-            this.ldap.authenticate(username, password, (err, user) => {
+            this.ldapClient.bind(ldapEscape.dn`uid=${username},` + this.config.ldapAuth.bindDN, password, (err) => {
                 if (err) {
-                    throw new Error(err); 
+                    debug(err);
+                    debug(username);
+                    reject(new Error(err)); 
                 }
-                return resolve(user);
+                return resolve(username);
             });
         });
     }
@@ -28,4 +35,4 @@ class FileAuth {
 }
 
 
-module.exports = FileAuth;
+module.exports = LdapAuth;

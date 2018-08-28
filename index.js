@@ -143,11 +143,11 @@ function addUser(name, pass, secret) {
 
 
 //Session stuff
-function newSession(user) {
+function newSession(username) {
     var session = {};
     session.uuid = uuid.v4();
     session.csrfToken = uuid.v4();
-    session.username = user.name;
+    session.username = username;
     session.loggedIn = true;
     sessions[session.uuid] = session;
     console.log(session);
