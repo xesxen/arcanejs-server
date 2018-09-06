@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 var storage = require('node-persist');
 var bcrypt = require('bcryptjs');
 var cookieParser = require('cookie-parser');
@@ -6,12 +6,11 @@ var uuid = require('node-uuid');
 var readlineSync = require('readline-sync');
 var fs = require('fs');
 var express = require('express');
-var speakeasy = require("speakeasy");
 var qrcode = require('qrcode-terminal');
-var resolve = require("path").resolve;
+var speakeasy = require('speakeasy');
+var resolve = require('path').resolve;
 var app = express();
 var bodyParser = require('body-parser');
-var path = require('path');
 var plugins = [];
 
 app.use(express.static('public'));
@@ -27,43 +26,39 @@ var users = storage.getItem('users');
 var sessions = storage.getItem('sessions');
 var port = storage.getItem('port');
 var rootDir = storage.getItem('rootDir');
-var test = storage.getItem('jemoeder');
-var twoFactorEnabled = storage.getItem('twoFactorEnabled');
-
-var host = storage.getItem('host');
 var options = storage.getItem('options');
 
 
+
+if (!port || !rootDir) {
+    firstRun();
+}
+if (sessions == undefined) {
+    sessions = {};
+}
+
+let authModuleConfig = storage.getItem('auth');
+const AuthModule = require('./modules/auth')(authModuleConfig);
+let authModule = new AuthModule(options.twoFactorEnabled);
+
+loadPlugins();
+
 function loadPlugins() {
-    var files = fs.readdirSync(__dirname + "/plugins");
+    var files = fs.readdirSync(__dirname + '/plugins');
     for (var i in files) {
-        var file = {name: files[i]};
         var name = __dirname + '/plugins/' + files[i];
 
         if (fs.statSync(name).isDirectory()) {
-            var plugin = require("./plugins/" + files[i] + "/index.js")(express, app, io);
+            var plugin = require('./plugins/' + files[i] + '/index.js')(express, app, io);
             console.log(plugin.name);
             plugins.push(plugin);
         }
     }
 }
 
-if (port == undefined) {
-    firstRun();
-}
-
-if (sessions == undefined) {
-    sessions = {};
-}
-
-
-//rootDir = resolve(rootDir);
-
-
-loadPlugins();
-
 function firstRun() {
-    console.log("ArcaneJS-Server is run for the first time. Some variables need to be set before ArcaneJS can start.");
+    console.log('ArcaneJS-Server is run for the first time. Some variables need to be set before ArcaneJS can start.');
+    askAuthenticationMethod();
     addUserDialog();
     options = {};
 
@@ -78,33 +73,23 @@ function firstRun() {
     storage.setItem('options', options);
 }
 
-function askQuestion(question) {
-    let done = false;
-    let result = true;
-    let answer = null;
-
-    while (!done) {
-        answer = readlineSync.question(question);
-        if (answer == "yes") {
-            done = true;
-        } else if (answer == "yes") {
-            result = false;
-            done = true;
-        }
-    }
-
-    return result;
+function askAuthenticationMethod() {
+    console.log('Which authentication method do you want to use?');
+    let backends = ['file', 'ldap'];
+    let index = readlineSync.keyInSelect(backends, 'Which authentication backend do you want to use?');
+    let authModuleName = backends[index];
+    storage.setItem('auth', {'authModule': authModuleName});
 }
 
 function addUserDialog() {
-    console.log("Addding a new user.");
+    console.log('Adding a new user.');
     var user = readlineSync.question('Username : ');
-    var pass1 = "a";
-    var pass2 = "b";
+    var pass1 = 'a';
+    var pass2 = 'b';
     var i = 0;
     while (pass1 != pass2) {
         if (i > 0) {
-            console.log("Passwords did not match :(");
+            console.log('Passwords did not match :(');
         }
 
         pass1 = readlineSync.question('Password : ', {
@@ -117,10 +102,30 @@ function addUserDialog() {
     }
 
     var secret = speakeasy.generateSecret();
-    console.log("2FA QR :");
+    console.log('2FA QR :');
     qrcode.generate(secret.otpauth_url);
     addUser(user, pass1, secret.base32);
 }
+
+function askQuestion(question) {
+    let done = false;
+    let result = true;
+    let answer = null;
+
+    while (!done) {
+        answer = readlineSync.question(question);
+        if (['y', 'yes'].includes(answer.toLowerCase())) {
+            done = true;
+        } else if (['n', 'no'].includes(answer.toLowerCase())) {
+            result = false;
+            done = true;
+        }
+    }
+
+    return result;
+}
+
+
 
 function addUser(name, pass, secret) {
     var user = {};
@@ -132,33 +137,17 @@ function addUser(name, pass, secret) {
     }
     users.push(user);
     storage.setItem('users', users);
-    console.log("User " + name + " added.");
+    console.log('User ' + name + ' added.');
     return user;
 }
 
-function checkPass(user, pass) {
-    return bcrypt.compareSync(pass, user.hash);
-}
-
-function getUser(name) {
-    var found = null;
-    var i = 0;
-
-    while (i < users.length) {
-        if (name == users[i].name) {
-            return users[i];
-        }
-        i++;
-    }
-    return found;
-}
 
 //Session stuff
-function newSession(user) {
+function newSession(username) {
     var session = {};
     session.uuid = uuid.v4();
     session.csrfToken = uuid.v4();
-    session.username = user.name;
+    session.username = username;
     session.loggedIn = true;
     sessions[session.uuid] = session;
     console.log(session);
@@ -170,14 +159,14 @@ var checkSession = function (req, res, checkCsrf, callback) {
     if (sessions[req.cookies.sessionId] != null) {
         if (sessions[req.cookies.sessionId].loggedIn) {
             if (checkCsrf) {
-                if (req.get("X-Csrf-Token") == sessions[req.cookies.sessionId].csrfToken) {
+                if (req.get('X-Csrf-Token') == sessions[req.cookies.sessionId].csrfToken) {
                     let session = sessions[req.cookies.sessionId];
                     req.session = session;
                     res.session = session;
                     callback(session);
                 } else {
                     res.statusCode = 401;
-                    res.send("Incorrect CSRF Token");
+                    res.send('Incorrect CSRF Token');
                 }
             } else {
                 callback(sessions[req.cookies.sessionId]);
@@ -185,11 +174,11 @@ var checkSession = function (req, res, checkCsrf, callback) {
 
         } else {
             res.statusCode = 401;
-            res.send("Session logged out");
+            res.send('Session logged out');
         }
     } else {
         res.statusCode = 401;
-        res.send("Session unknown");
+        res.send('Session unknown');
     }
 };
 
@@ -202,7 +191,7 @@ app.get('/api/apps', function (req, res) {
         var i = 0;
         while (i < plugins.length) {
             names.push(plugins[i].name);
-            i++
+            i++;
         }
         res.send(names); //TODO: Cache this
     });
@@ -213,11 +202,11 @@ app.get('/api/dir', function (req, res) {
         let fullPath = resolve(rootDir + req.query.cd);
 
         if (fullPath.startsWith(rootDir)) {
-            console.log("Getdir " + fullPath);
+            console.log('Getdir ' + fullPath);
             res.sendFile(fullPath);
         } else {
             res.statusCode = 403;
-            res.send("Forbidden");
+            res.send('Forbidden');
         }
         res.send(getFiles(rootDir + req.query.cd));
     });
@@ -228,11 +217,11 @@ app.get('/api/file/:name', function (req, res) {
         let fullPath = resolve(rootDir + req.query.cd + req.params.name);
 
         if (fullPath.startsWith(rootDir)) {
-            console.log("Getfile " + fullPath);
+            console.log('Getfile ' + fullPath);
             res.sendFile(fullPath);
         } else {
             res.statusCode = 403;
-            res.send("Forbidden");
+            res.send('Forbidden');
         }
     });
 });
@@ -242,11 +231,11 @@ app.post('/api/save/:name', function (req, res) {
         let fullPath = resolve(rootDir + req.query.cd + req.params.name);
 
         if (fullPath.startsWith(rootDir)) {
-            console.log("Saving " + fullPath);
+            console.log('Saving ' + fullPath);
             fs.writeFile(fullPath, req.body.data, function (err, data) {
                 if (err) {
                     res.statusCode = 500;
-                    res.send("Error saving");
+                    res.send('Error saving');
                 } else {
                     io.sockets.emit('refresh', 'now');
                     res.send(true);
@@ -254,7 +243,7 @@ app.post('/api/save/:name', function (req, res) {
             });
         } else {
             res.statusCode = 403;
-            res.send("Forbidden");
+            res.send('Forbidden');
         }
     });
 });
@@ -263,25 +252,25 @@ app.post('/api/newFile/:name', function (req, res) {
     checkSession(req, res, true, function (session) {
         let fullPath = resolve(rootDir + req.query.cd + req.params.name);
         if (fullPath.startsWith(rootDir)) {
-            console.log("Creating New File " + fullPath);
+            console.log('Creating New File ' + fullPath);
             fs.lstat(rootDir + req.query.cd + req.params.name, function (err, stats) {
                 if (err) {
                     fs.writeFile(fullPath, req.body.data, function (err, data) {
                         if (err) {
                             res.statusCode = 418;
-                            res.send("Error creating file");
+                            res.send('Error creating file');
                         } else {
                             res.send(true);
                         }
                     });
                 } else {
                     res.statusCode = 409;
-                    res.send("File exists!");
+                    res.send('File exists!');
                 }
             });
         } else {
             res.statusCode = 403;
-            res.send("Forbidden");
+            res.send('Forbidden');
         }
     });
 });
@@ -290,19 +279,19 @@ app.post('/api/newDir', function (req, res) {
     checkSession(req, res, true, function (session) {
         let fullPath = resolve(rootDir + req.query.cd);
         if (fullPath.startsWith(rootDir)) {
-            console.log("Creating New Directory " + fullPath);
+            console.log('Creating New Directory ' + fullPath);
             fs.lstat(rootDir + req.query.cd, function (err, stats) {
                 if (err) {
                     fs.mkdirSync(fullPath);
                     res.send(true);
                 } else {
                     res.statusCode = 409;
-                    res.send("Directory exists!");
+                    res.send('Directory exists!');
                 }
             });
         } else {
             res.statusCode = 403;
-            res.send("Forbidden");
+            res.send('Forbidden');
         }
     });
 });
@@ -312,7 +301,7 @@ app.post('/api/delete', function (req, res) {
         let fullPath = resolve(rootDir + req.query.cd);
 
         if (fullPath.startsWith(rootDir)) {
-            console.log("Deleting " + fullPath);
+            console.log('Deleting ' + fullPath);
             fs.lstat(fullPath, function (err, stats) {
                 if (!err) {
                     if (stats.isDirectory()) {
@@ -324,12 +313,12 @@ app.post('/api/delete', function (req, res) {
                     }
                 } else {
                     res.statusCode = 404;
-                    res.send("File doesn't exist!");
+                    res.send('File doesn\'t exist!');
                 }
             });
         } else {
             res.statusCode = 403;
-            res.send("Forbidden");
+            res.send('Forbidden');
         }
     });
 });
@@ -340,35 +329,19 @@ app.post('/api/reauth', function (req, res) {
     });
 });
 
-app.post('/api/login', function (req, res) {
+app.post('/api/login', async (req, res) => {
     let username = req.body.data.user;
     let password = req.body.data.pass;
     let token = req.body.data.token;
-    let user = getUser(username);
-
-    if (!user || !checkPass(user, password)) {
-        console.log("Login " + username + " UNKNOWN!");
-        res.statusCode = 401;
-        return res.send("Login failed");
-    }
-
-    if (options.twoFactorEnabled) {
-        if (speakeasy.totp.verify({secret: user.secret, encoding: 'base32', token: token})) {
-            console.log("Login " + user.name + " OK");
-            let session = newSession(user);
-            res.cookie("sessionId", session.uuid, {httpOnly: true});
-            res.send({csrfToken: session.csrfToken});
-
-        } else {
-            console.log("Login " + username + " 2FA incorrect!");
-            res.statusCode = 401;
-            res.send("Login failed");
-        }
-    } else {
-        console.log("Login " + user.name + " OK");
+    try {
+        let user = await authModule.login(username, password, token);
+        console.log(user);
         let session = newSession(user);
-        res.cookie("sessionId", session.uuid, {httpOnly: true});
-        res.send({csrfToken: session.csrfToken});
+        res.cookie('sessionId', session.uuid, {httpOnly: true});
+        res.send({csrfToken: session.csrfToken});    
+    } catch (err) {
+        res.statusCode = 401;
+        res.send(err.message);
     }
 });
 
@@ -397,7 +370,7 @@ var deleteFolderRecursive = function (path) {
     if (path.startsWith(rootDir)) {
         if (fs.existsSync(path)) {
             fs.readdirSync(path).forEach(function (file, index) {
-                var curPath = path + "/" + file;
+                var curPath = path + '/' + file;
                 if (fs.lstatSync(curPath).isDirectory()) { // recurse
                     deleteFolderRecursive(curPath);
                 } else { // delete file
@@ -416,7 +389,7 @@ var io = require('socket.io')(server);
 // Websocket stuffs
 io.use(function (socket, next) {
     //Check if the user is authenticated
-    var sessionId = socket.request.headers.cookie.split("sessionId=")[1].split(";")[0];
+    var sessionId = socket.request.headers.cookie.split('sessionId=')[1].split(';')[0];
     var csrfToken = socket.handshake.query.csrftoken;
     var session = sessions[sessionId];
 
@@ -431,7 +404,7 @@ io.use(function (socket, next) {
 });
 
 io.on('connection', function (socket) {
-    console.log(socket.session.username + " connected");
+    console.log(socket.session.username + ' connected');
 
     var i = 0;
     while (i < plugins.length) {
@@ -446,6 +419,6 @@ io.on('connection', function (socket) {
     });
 });
 
-require("./inc/cache.js")(express, app, io, rootDir);
+require('./inc/cache.js')(express, app, io, rootDir);
 server.listen(port, options.host);
-console.log("Started on port " + port);
+console.log('Started on port ' + port);
