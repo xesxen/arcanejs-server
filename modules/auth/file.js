@@ -28,6 +28,11 @@ class FileAuth {
         throw new Error(AUTH_ERR_MSG);
     }
 
+    getRoles(username) {
+        console.log('fileAuth backend does not support roles.');
+        return [];
+    }
+
     checkPassword(user, password) {
         if (!bcrypt.compareSync(password, user.hash)) {
             throw new Error(AUTH_ERR_MSG);
