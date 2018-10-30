@@ -55,4 +55,27 @@ class ReqManager{
         };     
       	Httpreq.send(JSON.stringify({data:data}));
     }
+
+    delete( url, callback ){
+        let loadingBar = new LoadingBar();
+
+        var Httpreq = new XMLHttpRequest();
+        Httpreq.open("DELETE",url,true);
+        Httpreq.setRequestHeader("X-Csrf-Token", this.app.sessionManager.csrfToken);
+
+        Httpreq.onload = (e) => {
+            if (Httpreq.readyState === 4) {
+                loadingBar.done();
+                callback(Httpreq);
+            }
+        };
+
+        Httpreq.onerror = function (e) {
+            console.error(xhr.statusText);
+
+            loadingBar.done();
+            callback(null);
+        };
+        Httpreq.send(null);
+    }
 }
