@@ -42,6 +42,7 @@ class Cache {
                     res.contentType("blaat.css");
                     res.send(this.items[hash][type]);
                 } else if(type === "js"){
+                    res.contentType("blaat.js");
                     res.send(this.items[hash][type]);
                 } 
                 else {
