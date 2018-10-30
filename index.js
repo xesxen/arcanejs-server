@@ -23,7 +23,7 @@ storage.initSync();
 
 //User stuff
 var users = storage.getItem('users');
-var sessions = storage.getItem('sessions');
+app.sessions = storage.getItem('sessions');
 var port = storage.getItem('port');
 var rootDir = storage.getItem('rootDir');
 var options = storage.getItem('options');
@@ -33,13 +33,14 @@ var options = storage.getItem('options');
 if (!port || !rootDir) {
     firstRun();
 }
-if (sessions == undefined) {
-    sessions = {};
+if (app.sessions == undefined) {
+    app.sessions = {};
 }
 
+// Authorization stuff
 let authModuleConfig = storage.getItem('auth');
 const AuthModule = require('./modules/auth')(authModuleConfig);
-let authModule = new AuthModule(options.twoFactorEnabled);
+app.authModule = new AuthModule(options.twoFactorEnabled);
 
 loadPlugins();
 
@@ -143,24 +144,25 @@ function addUser(name, pass, secret) {
 
 
 //Session stuff
-function newSession(username) {
+function newSession(username, roles) {
     var session = {};
     session.uuid = uuid.v4();
     session.csrfToken = uuid.v4();
     session.username = username;
+    session.roles = roles;
     session.loggedIn = true;
-    sessions[session.uuid] = session;
+    app.sessions[session.uuid] = session;
     console.log(session);
-    storage.setItem('sessions', sessions);
+    storage.setItem('sessions', app.sessions);
     return session;
 }
 
 var checkSession = function (req, res, checkCsrf, callback) {
-    if (sessions[req.cookies.sessionId] != null) {
-        if (sessions[req.cookies.sessionId].loggedIn) {
+    if (app.sessions[req.cookies.sessionId] != null) {
+        if (app.sessions[req.cookies.sessionId].loggedIn) {
             if (checkCsrf) {
-                if (req.get('X-Csrf-Token') == sessions[req.cookies.sessionId].csrfToken) {
-                    let session = sessions[req.cookies.sessionId];
+                if (req.get('X-Csrf-Token') == app.sessions[req.cookies.sessionId].csrfToken) {
+                    let session = app.sessions[req.cookies.sessionId];
                     req.session = session;
                     res.session = session;
                     callback(session);
@@ -169,7 +171,7 @@ var checkSession = function (req, res, checkCsrf, callback) {
                     res.send('Incorrect CSRF Token');
                 }
             } else {
-                callback(sessions[req.cookies.sessionId]);
+                callback(app.sessions[req.cookies.sessionId]);
             }
 
         } else {
@@ -334,9 +336,10 @@ app.post('/api/login', async (req, res) => {
     let password = req.body.data.pass;
     let token = req.body.data.token;
     try {
-        let user = await authModule.login(username, password, token);
-        console.log(user);
-        let session = newSession(user);
+        username = await app.authModule.login(username, password, token);
+        let roles = app.authModule.getRoles(username);
+        console.log(username);
+        let session = newSession(username, roles);
         res.cookie('sessionId', session.uuid, {httpOnly: true});
         res.send({csrfToken: session.csrfToken});    
     } catch (err) {
@@ -391,7 +394,7 @@ io.use(function (socket, next) {
     //Check if the user is authenticated
     var sessionId = socket.request.headers.cookie.split('sessionId=')[1].split(';')[0];
     var csrfToken = socket.handshake.query.csrftoken;
-    var session = sessions[sessionId];
+    var session = app.sessions[sessionId];
 
     if (session != null) {
         if (session.csrfToken == csrfToken) {
