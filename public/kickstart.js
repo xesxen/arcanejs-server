@@ -178,6 +178,10 @@ class PackageLoader{
             console.log(pack);
             let pacLocation = "/api/cache/pack/" + pack.hash;
             new Includer([pacLocation + ".css",pacLocation + ".js"], ()=>{
+                if (this.loadingBar){
+                    this.loadingBar.done();
+                }
+
                 if(callback){
                     callback();
                 }
